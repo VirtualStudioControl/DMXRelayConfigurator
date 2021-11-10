@@ -44,6 +44,17 @@ class UniverseWidget(QWidget):
             widget.setValueSilent(data[widget.channel])
         self.updateFrame()
 
+    def getFrame(self):
+        dmxFrame = [0] * 512
+        for widget in self.channelWidgets:
+            dmxFrame[widget.channel] = widget.value
+        return dmxFrame
+
+    def setFrame(self, frameData):
+        for widget in self.channelWidgets:
+            widget.setValueSilent(frameData[widget.channel])
+        self.updateFrame()
+
     def updateFrame(self):
         dmxFrame = [0]*512
         for widget in self.channelWidgets:

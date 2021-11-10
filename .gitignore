@@ -7,6 +7,7 @@ dist/*
 test/*
 native/*
 data/*
+DMXFrames/*
 __pychache__/*
 *.spec
 *.device.json

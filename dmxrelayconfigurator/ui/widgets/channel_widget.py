@@ -33,7 +33,6 @@ class ChannelWidget(QWidget):
 
     @value.setter
     def value(self, value):
-        self._value = value
         self.spin.setValue(value)
 
     def setValueSilent(self, value):

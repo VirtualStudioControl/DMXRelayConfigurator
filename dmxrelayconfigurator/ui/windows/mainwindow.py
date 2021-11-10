@@ -1,12 +1,13 @@
 import json
 from time import sleep
-from typing import Tuple, Optional, List
+from typing import Tuple, Optional, List, Dict
 
 from PyQt5.QtCore import *
 from PyQt5 import uic
-from PyQt5.QtWidgets import QMainWindow, QWidget, QTabWidget, QLineEdit, QSpinBox, QToolButton
+from PyQt5.QtWidgets import QMainWindow, QWidget, QTabWidget, QLineEdit, QSpinBox, QToolButton, QAction, QFileDialog
 
 from dmxrelayconfigurator.data import datatools
+from dmxrelayconfigurator.io.dmxframe_io import writeDMXFrame, readDMXFrame
 from dmxrelayconfigurator.logging import logengine
 from dmxrelayconfigurator.net import clientprotocol
 from dmxrelayconfigurator.net.tcpclient import TCPClient
@@ -44,12 +45,17 @@ class MainWindow(QMainWindow):
 
         self.universetabwidget: Optional[QTabWidget] = None
 
+        self.actionDMXFrameBin: Optional[QAction] = None
+        self.action_import_DMXFrameBinary: Optional[QAction] = None
+
         self.client: Optional[TCPClient] = None
 
         self.interfaceNames = []
         self.availablePorts = []
         self.interface_config = {}
         self.interface_widgets: List[InterfaceWidget] = []
+
+        self.universe_widgets: Dict[int, UniverseWidget] = {}
 
         uic.loadUi('GUI/windows/mainwindow.ui', self)
 
@@ -63,6 +69,35 @@ class MainWindow(QMainWindow):
 
         self.add_interface_button.clicked.connect(self.onAddInterface)
         self.push_interface_configuration_button.clicked.connect(self.pushInterfaceConfiguration)
+
+        self.actionDMXFrameBin.triggered.connect(self.exportDMXBin)
+        self.action_import_DMXFrameBinary.triggered.connect(self.importDMXBin)
+
+    def importDMXBin(self):
+        path = ""
+        path = QFileDialog.getOpenFileName(self, "Open DMX Frame", path,  "DMX Frame (*.dmxframe)")[0]
+
+        universes = readDMXFrame(path)
+
+        for universe in universes:
+            if universe[0] in self.universe_widgets.keys():
+                self.universe_widgets[universe[0]].setFrame(universe[1])
+
+    def exportDMXBin(self):
+        interfaceTuples = []
+        for universe in self.universe_widgets:
+            interfaceTuples.append((self.universe_widgets[universe].universe,
+                                   self.universe_widgets[universe].getFrame()))
+
+        path = ""
+
+        path = QFileDialog.getSaveFileName(self, "Save DMX Frame", path,  "DMX Frame (*.dmxframe)")[0]
+        if path == "":
+            return
+        try:
+            writeDMXFrame(path, interfaceTuples)
+        except Exception as ex:
+            logger.exception(ex)
 
     def pushInterfaceConfiguration(self):
         config = []
@@ -148,6 +183,8 @@ class MainWindow(QMainWindow):
 
                 uniWidget = UniverseWidget(universe)
                 uniWidget.client = self.client
+
+                self.universe_widgets[universe] = uniWidget
 
                 self.universetabwidget.addTab(uniWidget,
                                               "Universe {}".format(universe))
