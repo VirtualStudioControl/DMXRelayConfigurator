@@ -1,6 +1,6 @@
 import json
 from time import sleep
-from typing import Tuple, Optional, List, Dict
+from typing import  Optional, List, Dict
 
 from PyQt5.QtCore import *
 from PyQt5 import uic
@@ -130,8 +130,7 @@ class MainWindow(QMainWindow):
             self.client.setTimeout(2)
             self.client.start()
 
-            while not self.client.isConnected and self.client.running:
-                pass
+            sleep(1)
 
             try:
                 self.setupUniverseWidgets()

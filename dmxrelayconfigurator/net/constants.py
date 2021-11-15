@@ -1,5 +1,5 @@
-from ..logging import logengine
-from ..tools.bytetools import putInt
+from dmxrelayconfigurator.logging import logengine
+from dmxrelayconfigurator.tools.bytetools import putInt
 
 logger = logengine.getLogger()
 

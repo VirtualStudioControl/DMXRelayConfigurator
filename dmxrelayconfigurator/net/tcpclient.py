@@ -66,12 +66,10 @@ class TCPClient(Thread):
 
     def sendMessage(self, message: bytes):
         if self.sock is not None:
-            self.sendLock.acquire()
-            try:
-                self.logger.debug("Sending Message")
+            with self.sendLock:
+                self.logger.info("Sending Message")
                 self.sock.sendall(message)
-            finally:
-                self.sendLock.release()
+
 
     def closeConnection(self):
         self.isConnected = False

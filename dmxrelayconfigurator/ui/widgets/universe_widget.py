@@ -1,6 +1,7 @@
 from typing import Optional
 
 from PyQt5 import uic
+from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QWidget
 
 from dmxrelayconfigurator.logging import logengine
@@ -16,6 +17,8 @@ class UniverseWidget(QWidget):
     def __init__(self, universe: int, parent=None):
         super().__init__(parent)
 
+        self.UPDATE_DELAY_MS = 10
+
         self.universe = universe
         self._client: Optional[TCPClient] = None
 
@@ -24,6 +27,10 @@ class UniverseWidget(QWidget):
         uic.loadUi('GUI/widgets/universewidget.ui', self)
 
         self.channelWidgets = []
+
+        self.frameUpdateTimer = QTimer()
+        self.frameUpdateTimer.timeout.connect(self.onFrameUpdateTimer)
+        self.frameUpdateTimer.setSingleShot(True)
 
         for i in range(512):
             widget = ChannelWidget(label="Channel {}".format(i+1), channel=i, valueChanged=self.updateFrame)
@@ -56,6 +63,9 @@ class UniverseWidget(QWidget):
         self.updateFrame()
 
     def updateFrame(self):
+        self.frameUpdateTimer.start(self.UPDATE_DELAY_MS)
+
+    def onFrameUpdateTimer(self):
         dmxFrame = [0]*512
         for widget in self.channelWidgets:
             dmxFrame[widget.channel] = widget.value

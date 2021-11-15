@@ -4,7 +4,7 @@ from typing import Optional, Callable, Any, Iterable
 from .constants import *
 from .constants import _buildMessage
 
-from ..tools.bytetools import getInt
+from dmxrelayconfigurator.tools.bytetools import getInt
 
 
 #region Authentification
