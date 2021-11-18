@@ -4,6 +4,8 @@ from PyQt5 import uic
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QWidget
 
+from dmxrelayconfigurator.dmx import frame_manager
+from dmxrelayconfigurator.interfaces.IFrameProvider import IFrameProvider
 from dmxrelayconfigurator.logging import logengine
 from dmxrelayconfigurator.net.tcpclient import TCPClient
 from dmxrelayconfigurator.net import clientprotocol as proto
@@ -12,7 +14,7 @@ from dmxrelayconfigurator.ui.widgets.channel_widget import ChannelWidget
 
 logger = logengine.getLogger()
 
-class UniverseWidget(QWidget):
+class UniverseWidget(QWidget, IFrameProvider):
 
     def __init__(self, universe: int, parent=None):
         super().__init__(parent)
@@ -36,6 +38,8 @@ class UniverseWidget(QWidget):
             widget = ChannelWidget(label="Channel {}".format(i+1), channel=i, valueChanged=self.updateFrame)
             self.channelWidgets.append(widget)
             self.scrollAreaWidgetContents.layout().addWidget(widget)
+
+        frame_manager.registerFrameProvider(self.universe, self)
 
     @property
     def client(self):
@@ -61,6 +65,16 @@ class UniverseWidget(QWidget):
         for widget in self.channelWidgets:
             widget.setValueSilent(frameData[widget.channel])
         self.updateFrame()
+
+    def setChannel(self, channel, value):
+        self.channelWidgets[channel].value = value
+
+    def setChannelSilent(self, channel, value):
+        logger.info("UNIVERSE_WIDGET: Set Channel Silent: {} {}".format(channel, value))
+        self.channelWidgets[channel].setValueSilent(value)
+
+    def getChannel(self, channel):
+        return self.channelWidgets[channel].value
 
     def updateFrame(self):
         self.frameUpdateTimer.start(self.UPDATE_DELAY_MS)

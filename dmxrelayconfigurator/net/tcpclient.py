@@ -49,8 +49,13 @@ class TCPClient(Thread):
                     length = self.sock.recv(4)  # 16 kb buffer
                     if len(length) < 4:
                         continue
-                    data = self.sock.recv(getInt(length, start=0))
-                    self.logger.debug("Message Recieved: {:08X} {}".format(getInt(length, start=0), str(data)))
+
+                    pkglen = getInt(length, start=0)
+                    data = bytearray()
+                    while len(data) < pkglen:
+                        data += self.sock.recv(pkglen)
+
+                    self.logger.info("Message Recieved: {:08X} {}".format(getInt(length, start=0), str(data)))
                     self.onMessageRecv(data)
                 except:
                     pass

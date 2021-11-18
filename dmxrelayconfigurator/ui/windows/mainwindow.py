@@ -4,14 +4,20 @@ from typing import  Optional, List, Dict
 
 from PyQt5.QtCore import *
 from PyQt5 import uic
-from PyQt5.QtWidgets import QMainWindow, QWidget, QTabWidget, QLineEdit, QSpinBox, QToolButton, QAction, QFileDialog
+from PyQt5.QtWidgets import QMainWindow, QWidget, QTabWidget, QLineEdit, QSpinBox, QToolButton, QAction, QFileDialog, \
+    QVBoxLayout, QScrollArea
 
 from dmxrelayconfigurator.data import datatools
+from dmxrelayconfigurator.dmx import device_manager
+from dmxrelayconfigurator.dmx.dmxdevice import DMXDevice
 from dmxrelayconfigurator.io.dmxframe_io import writeDMXFrame, readDMXFrame
 from dmxrelayconfigurator.logging import logengine
 from dmxrelayconfigurator.net import clientprotocol
 from dmxrelayconfigurator.net.tcpclient import TCPClient
 from dmxrelayconfigurator.tools.bytetools import getStringList
+from dmxrelayconfigurator.ui.widgets.channel_widget import ChannelWidget
+from dmxrelayconfigurator.ui.widgets.collapsible_panel import CollapsibleBox
+from dmxrelayconfigurator.ui.widgets.dmx_device_widget import DMXDeviceWidget
 from dmxrelayconfigurator.ui.widgets.interface_widget import InterfaceWidget
 from dmxrelayconfigurator.ui.widgets.universe_widget import UniverseWidget
 
@@ -25,6 +31,7 @@ CONFIG_KEY_DMX_INTERFACE_UNIVERSE = "universe"
 class MainWindow(QMainWindow):
 
     onConfigGotten = pyqtSignal()
+    onDMXSceneGotten = pyqtSignal()
 
     def __init__(self):
         """
@@ -43,12 +50,15 @@ class MainWindow(QMainWindow):
         self.add_interface_button: Optional[QToolButton] = None
         self.push_interface_configuration_button: Optional[QToolButton] = None
 
+        self.device_list: Optional[QWidget] = None
         self.universetabwidget: Optional[QTabWidget] = None
 
         self.actionDMXFrameBin: Optional[QAction] = None
         self.action_import_DMXFrameBinary: Optional[QAction] = None
 
         self.client: Optional[TCPClient] = None
+
+        self.device_widget_list = []
 
         self.interfaceNames = []
         self.availablePorts = []
@@ -66,6 +76,7 @@ class MainWindow(QMainWindow):
     def setupCallbacks(self):
         self.client_connect_button.clicked.connect(self.onConnectToClient)
         self.onConfigGotten.connect(self.createServerUI)
+        self.onDMXSceneGotten.connect(self.setupDMXScene)
 
         self.add_interface_button.clicked.connect(self.onAddInterface)
         self.push_interface_configuration_button.clicked.connect(self.pushInterfaceConfiguration)
@@ -111,11 +122,14 @@ class MainWindow(QMainWindow):
 
         self.onConfigGotten.emit()
 
-
     def onAddInterface(self, checked=False):
         if self.client is None:
             return
-        self.addInterfaceWidget(0, "", self.interfaceNames[0])
+        try:
+            self.addInterfaceWidget(0, "", self.interfaceNames[0])
+        except Exception as ex:
+            logger.exception(ex)
+
 
     def onConnectToClient(self):
         if self.client is None:
@@ -134,6 +148,7 @@ class MainWindow(QMainWindow):
 
             try:
                 self.setupUniverseWidgets()
+                self.setupDeviceWidgets()
             except Exception as ex:
                 logger.exception(ex)
 
@@ -143,9 +158,44 @@ class MainWindow(QMainWindow):
             self.client_connect_button.setText("Connect")
             self.client.requestStop()
             self.client = None
+            self.clearDeviceWidgets()
             self.clearUniverseWidgets()
 
             logger.info("Client Disconnected")
+
+    def clearDeviceWidgets(self):
+        for widget in self.device_widget_list:
+            self.device_list.layout().removeWidget(widget)
+            del widget
+        self.device_widget_list.clear()
+
+    def setupDeviceWidgets(self):
+        self.client.sendMessage(clientprotocol.createGet(datatools.messageID(),
+                                                         clientprotocol.GET_CURRENT_DMX_SCENE, self.parseDMXScene))
+
+    def parseDMXScene(self, client, value):
+        dmxscene = json.loads(value)
+        device_manager.fromDict(dmxscene)
+        self.onDMXSceneGotten.emit()
+
+    def setupDMXScene(self):
+        for device in device_manager.getDMXDevices():
+            self.addDMXWidget(device)
+            logger.info(self.verticalLayout_3.count())
+
+        #self.device_list.layout().addWidget(Spacer())
+
+    def addDMXWidget(self, device: DMXDevice):
+        box = CollapsibleBox(title="{} [Universe {}, Channel {}]".format(device.name, device.universe,
+                                                                             device.baseChannel+1), hasCloseButton=False)
+        widget = DMXDeviceWidget(device)
+        layout = QVBoxLayout()
+        layout.addWidget(widget)
+        box.setContentLayout(layout)
+        self.device_list.layout().addWidget(box, alignment=Qt.AlignTop)
+
+        self.device_widget_list.append(box)
+
 
     def clearUniverseWidgets(self):
         self.universetabwidget.clear()
@@ -157,7 +207,9 @@ class MainWindow(QMainWindow):
                                                          clientprotocol.GET_INTERFACE_NAMES, self.parseInterfaceList))
 
     def parseInterfaceList(self, client, value):
+        logger.info("Parsing Interface list....")
         self.interfaceNames = getStringList(value)
+        logger.info(self.interfaceNames)
         self.client.sendMessage(clientprotocol.createGet(datatools.messageID(),
                                                          clientprotocol.GET_AVAILABLE_PORTS,
                                                          self.parsePortList))

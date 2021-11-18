@@ -9,7 +9,7 @@ logger = logengine.getLogger()
 
 class ChannelWidget(QWidget):
 
-    def __init__(self, parent=None, channel: int = 0, label="", valueChanged: Callable[[], None] = None):
+    def __init__(self, parent=None, channel: int = 0, label="", seperator=True, valueChanged: Callable[[], None] = None):
         super().__init__(parent)
         self.valueChanged = None
         self.channel: int = channel
@@ -21,11 +21,21 @@ class ChannelWidget(QWidget):
 
         uic.loadUi('GUI/widgets/channelwidget.ui', self)
 
+        if not seperator:
+            self.line: QWidget
+            self.line.setVisible(False)
+
+
         self.label.setText(label)
 
         self.setupCallbacks()
         self.spin.setValue(0)
         self.valueChanged = valueChanged
+
+    def setMaximumValue(self, max):
+        self.spin.setMaximum(max)
+        self.slider.setMaximum(max)
+        self.slider.setTickInterval(max//25)
 
     @property
     def value(self):
