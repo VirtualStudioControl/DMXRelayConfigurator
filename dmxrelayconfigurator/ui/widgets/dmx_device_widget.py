@@ -27,32 +27,51 @@ class DMXDeviceWidget(QWidget):
         self.label_universe.setText("{}".format(device.universe))
         self.label_basechannel.setText("{}".format(device.baseChannel+1))
 
+        self.colorWidget = None
         self.panWidget = None
         self.tiltWidget = None
         self.speedWidget = None
 
         if device.hasColor():
-            self.setupColorWidget()
+            self.colorWidget = self.setupColorWidget()
 
         if device.hasPan():
-            self.panWidget = self.setupRotationWidget("Pan", 0xffff, valueChanged=self.setDevicePan)
+            self.panWidget = self.setupRotationWidget("Pan", 0xffff, self.device.getPan(), valueChanged=self.setDevicePan)
 
         if device.hasTilt():
-            self.tiltWidget = self.setupRotationWidget("Tilt", 0xffff, False, valueChanged=self.setDeviceTilt)
+            self.tiltWidget = self.setupRotationWidget("Tilt", 0xffff, self.device.getTilt(), False, valueChanged=self.setDeviceTilt)
 
         if device.hasSpeed():
-            self.speedWidget = self.setupRotationWidget("Speed", 0xff, valueChanged=self.setDeviceSpeed)
+            self.speedWidget = self.setupRotationWidget("Speed", 0xff, self.device.getPanTiltSpeed(), valueChanged=self.setDeviceSpeed)
 
-    def setupRotationWidget(self, title, maximum, seperator=True, valueChanged: Optional[Callable[[], None]] = None):
+        self.device.addUpdateFunction(self.updateWidgets)
+
+    def setupRotationWidget(self, title, maximum, value, seperator=True, valueChanged: Optional[Callable[[], None]] = None):
         widget = ChannelWidget(label=title, seperator=seperator, valueChanged=valueChanged)
         widget.setMaximumValue(maximum)
+        widget.setValueSilent(value)
         self.param_widget.layout().addWidget(widget, alignment=Qt.AlignTop)
         return widget
 
     def setupColorWidget(self):
         widget = DMXColorChooserWidget(self.device)
+        widget.setColor(QColor(*self.device.getColor()))
         widget.connect(self.setDeviceColor)
         self.param_widget.layout().addWidget(widget, alignment=Qt.AlignTop)
+        return widget
+
+    def updateWidgets(self):
+        if self.colorWidget is not None:
+            self.colorWidget.setColor(QColor(*self.device.getColor()))
+
+        if self.panWidget is not None:
+            self.panWidget.setValueSilent(self.device.getPan())
+
+        if self.tiltWidget is not None:
+            self.tiltWidget.setValueSilent(self.device.getTilt())
+
+        if self.speedWidget is not None:
+            self.speedWidget.setValueSilent(self.device.getPanTiltSpeed())
 
     def setDevicePan(self):
         if self.panWidget is not None:

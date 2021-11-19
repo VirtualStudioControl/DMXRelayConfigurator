@@ -5,16 +5,19 @@ from dmxrelayconfigurator.io.filetools import writeJSON
 UNIVERSE = 1
 
 if __name__ == "__main__":
-    device_manager.addDMXDevice(DMXDevice(universe=UNIVERSE, baseChannel=0, channelCount=3,
+    device_manager.addDMXDevice(DMXDevice(universe=UNIVERSE, baseChannel=0, channelCount=8,
                     name="Große Leuchte", devtype="Generic RGB",
-                    channelTypes=[CHANNEL_TYPE_RED, CHANNEL_TYPE_GREEN, CHANNEL_TYPE_BLUE],
-                    constantChannels={}))
+                    channelTypes=[CHANNEL_TYPE_RED, CHANNEL_TYPE_GREEN, CHANNEL_TYPE_BLUE, CHANNEL_TYPE_STROBO,
+                                  CHANNEL_TYPE_COLOR_MODE, CHANNEL_TYPE_COLOR_JUMP_SPEED,
+                                  CHANNEL_TYPE_UNKNOWN, CHANNEL_TYPE_UNKNOWN],
+                    constantChannels={CHANNEL_TYPE_COLOR_MODE: 0x00}))
 
 
-    device_manager.addDMXDevice(DMXDevice(universe=UNIVERSE, baseChannel=30, channelCount=4,
+    device_manager.addDMXDevice(DMXDevice(universe=UNIVERSE, baseChannel=30, channelCount=7,
                     name="UKing", devtype="Generic Dimmed RGB",
-                    channelTypes=[CHANNEL_TYPE_DIMMER, CHANNEL_TYPE_RED, CHANNEL_TYPE_GREEN, CHANNEL_TYPE_BLUE],
-                    constantChannels={CHANNEL_TYPE_DIMMER: 0xff}))
+                    channelTypes=[CHANNEL_TYPE_DIMMER, CHANNEL_TYPE_RED, CHANNEL_TYPE_GREEN, CHANNEL_TYPE_BLUE,
+                                  CHANNEL_TYPE_STROBO, CHANNEL_TYPE_COLOR_MODE, CHANNEL_TYPE_COLOR_JUMP_SPEED],
+                    constantChannels={CHANNEL_TYPE_DIMMER: 0xff, CHANNEL_TYPE_COLOR_MODE: 0x00}))
 
     device_manager.addDMXDevice(DMXDevice(universe=UNIVERSE, baseChannel=90, channelCount=14,
                                           name="MovingHead", devtype="Generic RGBW Moving Head",

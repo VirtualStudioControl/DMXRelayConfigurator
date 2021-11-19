@@ -17,6 +17,11 @@ def getDMXDevices():
     return DMX_DEVICES
 
 
+def updateDMXDevices():
+    for dev in DMX_DEVICES:
+        dev.updateDevice()
+
+
 def toDict():
     devices = []
     for dev in DMX_DEVICES:

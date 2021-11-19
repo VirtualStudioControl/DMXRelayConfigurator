@@ -4,7 +4,7 @@ from PyQt5 import uic
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QWidget
 
-from dmxrelayconfigurator.dmx import frame_manager
+from dmxrelayconfigurator.dmx import frame_manager, device_manager
 from dmxrelayconfigurator.interfaces.IFrameProvider import IFrameProvider
 from dmxrelayconfigurator.logging import logengine
 from dmxrelayconfigurator.net.tcpclient import TCPClient
@@ -70,7 +70,6 @@ class UniverseWidget(QWidget, IFrameProvider):
         self.channelWidgets[channel].value = value
 
     def setChannelSilent(self, channel, value):
-        logger.info("UNIVERSE_WIDGET: Set Channel Silent: {} {}".format(channel, value))
         self.channelWidgets[channel].setValueSilent(value)
 
     def getChannel(self, channel):
@@ -86,3 +85,5 @@ class UniverseWidget(QWidget, IFrameProvider):
 
         if self._client is not None and self._client.isConnected:
             self._client.sendMessage(proto.createDMXMessage(False, self.universe, dmxFrame))
+
+        device_manager.updateDMXDevices()

@@ -1,5 +1,5 @@
 import logging
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Callable
 
 from dmxrelayconfigurator.dmx import frame_manager
 from dmxrelayconfigurator.logging import logengine
@@ -23,6 +23,7 @@ CHANNEL_TYPE_XYSPEED = "XYSPEED"
 CHANNEL_TYPE_DIMMER = "DIMMER"
 CHANNEL_TYPE_COLOR_MODE = "COLOR_MODE"
 CHANNEL_TYPE_COLOR_JUMP_SPEED = "COLOR_SPEED"
+CHANNEL_TYPE_STROBO = "STROBO"
 CHANNEL_TYPE_CUSTOM = "CUSTOM"
 CHANNEL_TYPE_RESET = "RESET"
 
@@ -57,6 +58,29 @@ class DMXDevice:
         self.parent = None
         self.children = []
 
+        self.updateFunctions: List[Callable[[], None]] = []
+
+    #region Update System
+
+    def addUpdateFunction(self, func: Callable[[], None]):
+        self.updateFunctions.append(func)
+
+    def removeUpdateFuction(self, func):
+        self.updateFunctions.remove(func)
+
+    def clearUpdateFunctions(self):
+        self.updateFunctions.clear()
+
+    def updateDevice(self):
+        for update in self.updateFunctions:
+            try:
+                update()
+            except Exception as ex:
+                logger.error("An Error occured during calling frame update functions")
+                logger.exception(ex)
+
+    #endregion
+
     #region Parent / Child
 
     def setParent(self, parent):
@@ -87,40 +111,28 @@ class DMXDevice:
     #region LowLevel
 
     def __setValue(self, channel, value):
-        logger.info("Set Channel {} to {}".format(channel, value))
         for child in self.children:
-            logger.info("Set Child")
             child.__setValue(channel, value)
 
         if self.baseChannel < 0:
-            logger.info("Reject A")
             return
 
         if type(channel) == str:
-            logger.info("Get Channel index")
             channel = self.getChannelIDByType(channel)
-            logger.info("Channel Index: {}".format(channel))
 
         if channel < 0:
-            logger.info("Reject B")
             return
 
         if self.baseChannel + channel >= 512:
-            logger.info("Reject C")
             return
 
         if value < 0:
-            logger.info("Value turncated to 0")
             value = 0
         elif value > 255:
-            logger.info("Value turncated to 0xff")
             value = 255
 
-        logger.info("Setting Channel")
         frame = frame_manager.getFrameProvider(self.universe)
-        logger.info("Got Frame Provider: {}".format(frame))
         frame.setChannelSilent(channel + self.baseChannel, value)
-        logger.info("Frame Channel set successful")
 
     def __getValue(self, channel) -> int:
         val = -1
@@ -164,7 +176,6 @@ class DMXDevice:
         """
         self.__setValue(channel, value)
         return True
-
 
     def getChannel(self, channel) -> int:
         """
@@ -220,25 +231,35 @@ class DMXDevice:
         return self.hasChannelType(CHANNEL_TYPE_XYSPEED)
 
     def setColorRGB(self, red, green, blue):
-        logger.info("Set Color RGB: ({}, {}, {})".format(red, green, blue))
         if self.hasChannelType(CHANNEL_TYPE_WHITE):
             red, green, blue, white = rgb_to_rgbw(red, green, blue)
-            logger.info("Set Channel White: {}".format(white))
             self.setChannel(CHANNEL_TYPE_WHITE, white)
 
-        logger.info("Set Channel Red: {}".format(red))
         self.setChannel(CHANNEL_TYPE_RED, red)
-        logger.info("Set Channel Green: {}".format(green))
         self.setChannel(CHANNEL_TYPE_GREEN, green)
-        logger.info("Set Channel Blue: {}".format(blue))
         self.setChannel(CHANNEL_TYPE_BLUE, blue)
 
         self.__updateFrame()
+
+    def getColor(self):
+        white = 0
+
+        if self.hasChannelType(CHANNEL_TYPE_WHITE):
+            white = self.getChannel(CHANNEL_TYPE_WHITE)
+
+        red = self.getChannel(CHANNEL_TYPE_RED) + white
+        green = self.getChannel(CHANNEL_TYPE_GREEN) + white
+        blue = self.getChannel(CHANNEL_TYPE_BLUE) + white
+
+        return (red, green, blue)
 
     def setPanTiltSpeed(self, value):
         if self.hasChannelType(CHANNEL_TYPE_XYSPEED):
             self.setChannel(CHANNEL_TYPE_XYSPEED, value)
             self.__updateFrame()
+
+    def getPanTiltSpeed(self):
+        return self.getChannel(CHANNEL_TYPE_XYSPEED)
 
     def setPan(self, value):
         if self.hasChannelType(CHANNEL_TYPE_PAN):
@@ -249,6 +270,11 @@ class DMXDevice:
             self.setChannel(CHANNEL_TYPE_PAN, (value >> 8) & 0xff)
             self.__updateFrame()
 
+    def getPan(self):
+        if self.hasChannelType(CHANNEL_TYPE_PAN_FINE):
+            return self.getInt16(CHANNEL_TYPE_PAN, CHANNEL_TYPE_PAN_FINE)
+        return self.getChannel(CHANNEL_TYPE_PAN) << 8
+
     def setTilt(self, value):
         if self.hasChannelType(CHANNEL_TYPE_TILT):
             if self.hasChannelType(CHANNEL_TYPE_TILT_FINE):
@@ -257,6 +283,11 @@ class DMXDevice:
                 return
             self.setChannel(CHANNEL_TYPE_TILT, (value >> 8) & 0xff)
             self.__updateFrame()
+
+    def getTilt(self):
+        if self.hasChannelType(CHANNEL_TYPE_TILT_FINE):
+            return self.getInt16(CHANNEL_TYPE_TILT, CHANNEL_TYPE_TILT_FINE)
+        return self.getChannel(CHANNEL_TYPE_TILT) << 8
     #endregion
 
     def toDict(self):
