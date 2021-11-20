@@ -14,7 +14,7 @@ from dmxrelayconfigurator.io.dmxframe_io import writeDMXFrame, readDMXFrame
 from dmxrelayconfigurator.logging import logengine
 from dmxrelayconfigurator.net import clientprotocol
 from dmxrelayconfigurator.net.tcpclient import TCPClient
-from dmxrelayconfigurator.tools.bytetools import getStringList
+from dmxrelayconfigurator.tools.bytetools import getStringList, getInt
 from dmxrelayconfigurator.ui.widgets.channel_widget import ChannelWidget
 from dmxrelayconfigurator.ui.widgets.collapsible_panel import CollapsibleBox
 from dmxrelayconfigurator.ui.widgets.dmx_device_widget import DMXDeviceWidget
@@ -63,6 +63,7 @@ class MainWindow(QMainWindow):
         self.interfaceNames = []
         self.availablePorts = []
         self.interface_config = {}
+        self.binaryDMXFrameData = None
         self.interface_widgets: List[InterfaceWidget] = []
 
         self.universe_widgets: Dict[int, UniverseWidget] = {}
@@ -166,8 +167,9 @@ class MainWindow(QMainWindow):
     def clearDeviceWidgets(self):
         for widget in self.device_widget_list:
             self.device_list.layout().removeWidget(widget)
-            del widget
+            widget.onCloseRequest()
         self.device_widget_list.clear()
+        device_manager.clearDMXDevices()
 
     def setupDeviceWidgets(self):
         self.client.sendMessage(clientprotocol.createGet(datatools.messageID(),
@@ -176,7 +178,6 @@ class MainWindow(QMainWindow):
     def parseDMXScene(self, client, value):
         dmxscene = json.loads(value)
         device_manager.fromDict(dmxscene)
-        self.onDMXSceneGotten.emit()
 
     def setupDMXScene(self):
         for device in device_manager.getDMXDevices():
@@ -222,17 +223,44 @@ class MainWindow(QMainWindow):
 
     def parseInterfaceConfiguration(self, client, value: bytes):
         self.interface_config = json.loads(value.decode("utf-8"))
+        self.client.sendMessage(clientprotocol.createGet(datatools.messageID(),
+                                                         clientprotocol.GET_CURRENT_DMX_FRAME,
+                                                         self.getDMXData))
+
+    def getDMXData(self, client, value: bytes):
+        self.binaryDMXFrameData = value
         self.onConfigGotten.emit()
+
+    def parseDMXBinaryData(self, content):
+        universeCount = getInt(content, 0)
+        results = {}
+
+        position = 4
+        for i in range(universeCount):
+            universe = getInt(content, position)
+            position += 4
+            universeLength = getInt(content, position)
+            position += 4
+            data = content[position: position + universeLength]
+            position += universeLength
+            results[universe] = data
+
+        return results
 
     def createServerUI(self):
         self.clearUniverseWidgets()
         try:
+            dmx_buffer = self.parseDMXBinaryData(self.binaryDMXFrameData)
             for interface in self.interface_config:
                 universe = interface[CONFIG_KEY_DMX_INTERFACE_UNIVERSE]
                 port = interface[CONFIG_KEY_DMX_INTERFACE_PORT]
                 device = interface[CONFIG_KEY_DMX_INTERFACE_TYPE]
 
-                uniWidget = UniverseWidget(universe)
+                frame = [0]*512
+                if universe in dmx_buffer:
+                    frame = dmx_buffer[universe]
+
+                uniWidget = UniverseWidget(universe, frame)
                 uniWidget.client = self.client
 
                 self.universe_widgets[universe] = uniWidget
@@ -243,6 +271,8 @@ class MainWindow(QMainWindow):
                 self.addInterfaceWidget(universe, port, device)
         except Exception as ex:
             logger.exception(ex)
+
+        self.onDMXSceneGotten.emit()
     #endregion
 
     def addInterfaceWidget(self, universe, port, device):

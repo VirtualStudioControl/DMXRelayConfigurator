@@ -25,7 +25,6 @@ class DMXColorChooserWidget(QWidget):
         self.color_chooser.colorChanged.connect(func)
 
     def setColor(self, color: QColor):
-        logging.info("Set Color")
         try:
             self.color_chooser.setColor(color)
         except Exception as ex:

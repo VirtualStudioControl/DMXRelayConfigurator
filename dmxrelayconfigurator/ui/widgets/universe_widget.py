@@ -16,7 +16,7 @@ logger = logengine.getLogger()
 
 class UniverseWidget(QWidget, IFrameProvider):
 
-    def __init__(self, universe: int, parent=None):
+    def __init__(self, universe: int, frameData = None, parent=None):
         super().__init__(parent)
 
         self.UPDATE_DELAY_MS = 10
@@ -35,10 +35,15 @@ class UniverseWidget(QWidget, IFrameProvider):
         self.frameUpdateTimer.setSingleShot(True)
 
         for i in range(512):
-            widget = ChannelWidget(label="Channel {}".format(i+1), channel=i, valueChanged=self.updateFrame)
+            value = 0
+            if frameData is not None:
+                value = frameData[i]
+            widget = ChannelWidget(label="Channel {}".format(i+1), value=value, channel=i, valueChanged=self.updateFrame)
             self.channelWidgets.append(widget)
             self.scrollAreaWidgetContents.layout().addWidget(widget)
 
+        if frameData is not None:
+            self.setFrame(frameData)
         frame_manager.registerFrameProvider(self.universe, self)
 
     @property

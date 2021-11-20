@@ -20,6 +20,7 @@ def writeDMXFrame(path, frameData: List[Tuple[int, Union[bytes, bytearray, List[
 
     writeFileBinary(path, content)
 
+
 def readDMXFrame(path) -> List[Tuple[int, Union[bytes, bytearray, List[int]]]]:
     content = readFileBinary(path)
 

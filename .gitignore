@@ -12,3 +12,4 @@ __pychache__/*
 *.spec
 *.device.json
 *.json
+*.log

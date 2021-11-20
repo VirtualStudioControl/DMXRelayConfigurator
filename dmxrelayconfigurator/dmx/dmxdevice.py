@@ -247,9 +247,9 @@ class DMXDevice:
         if self.hasChannelType(CHANNEL_TYPE_WHITE):
             white = self.getChannel(CHANNEL_TYPE_WHITE)
 
-        red = self.getChannel(CHANNEL_TYPE_RED) + white
-        green = self.getChannel(CHANNEL_TYPE_GREEN) + white
-        blue = self.getChannel(CHANNEL_TYPE_BLUE) + white
+        red = min(self.getChannel(CHANNEL_TYPE_RED) + white, 0xff)
+        green = min(self.getChannel(CHANNEL_TYPE_GREEN) + white, 0xff)
+        blue = min(self.getChannel(CHANNEL_TYPE_BLUE) + white, 0xff)
 
         return (red, green, blue)
 
