@@ -28,6 +28,11 @@ CONFIG_KEY_DMX_INTERFACE_PORT = "port"
 CONFIG_KEY_DMX_INTERFACE_TYPE = "type"
 CONFIG_KEY_DMX_INTERFACE_UNIVERSE = "universe"
 
+CONFIG_KEY_DMX_INTERFACE_USB_VENDOR_ID = "usb_vendor_id"
+CONFIG_KEY_DMX_INTERFACE_USB_PRODUCT_ID = "usb_product_id"
+CONFIG_KEY_DMX_INTERFACE_USB_BUS = "usb_bus"
+CONFIG_KEY_DMX_INTERFACE_USB_ADDRESS = "usb_address"
+
 class MainWindow(QMainWindow):
 
     onConfigGotten = pyqtSignal()
@@ -203,6 +208,9 @@ class MainWindow(QMainWindow):
         for widget in self.interface_widgets:
             widget.removeWidget()
 
+        for widget in self.interface_widgets:
+            widget.removeWidget()
+
     def setupUniverseWidgets(self):
         self.client.sendMessage(clientprotocol.createGet(datatools.messageID(),
                                                          clientprotocol.GET_INTERFACE_NAMES, self.parseInterfaceList))
@@ -256,6 +264,11 @@ class MainWindow(QMainWindow):
                 port = interface[CONFIG_KEY_DMX_INTERFACE_PORT]
                 device = interface[CONFIG_KEY_DMX_INTERFACE_TYPE]
 
+                vendor_id = interface[CONFIG_KEY_DMX_INTERFACE_USB_VENDOR_ID]
+                product_id = interface[CONFIG_KEY_DMX_INTERFACE_USB_PRODUCT_ID]
+                bus = interface[CONFIG_KEY_DMX_INTERFACE_USB_BUS]
+                address = interface[CONFIG_KEY_DMX_INTERFACE_USB_ADDRESS]
+
                 frame = [0]*512
                 if universe in dmx_buffer:
                     frame = dmx_buffer[universe]
@@ -268,16 +281,16 @@ class MainWindow(QMainWindow):
                 self.universetabwidget.addTab(uniWidget,
                                               "Universe {}".format(universe))
 
-                self.addInterfaceWidget(universe, port, device)
+                self.addInterfaceWidget(universe, port, device, vendor_id, product_id, bus, address)
         except Exception as ex:
             logger.exception(ex)
 
         self.onDMXSceneGotten.emit()
     #endregion
 
-    def addInterfaceWidget(self, universe, port, device):
-        interWidget = InterfaceWidget(universe, port, device, self.interfaceNames, self.availablePorts,
-                                      self.removeInterfacewidgetFromList)
+    def addInterfaceWidget(self, universe, port, device, vendor_id, product_id, bus, address):
+        interWidget = InterfaceWidget(universe, port, device, self.interfaceNames, self.availablePorts, vendor_id,
+                                      product_id, bus, address, self.removeInterfacewidgetFromList)
         self.interface_widgets.append(interWidget)
         self.interface_container.layout().addWidget(interWidget)
 

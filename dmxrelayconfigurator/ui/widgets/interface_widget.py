@@ -19,7 +19,8 @@ USB_INTERFACE_NAMES = ["UDMX"]
 
 class InterfaceWidget(QWidget):
 
-    def __init__(self, universe, port, interface, interfaces_available, ports_available, destructor, parent=None):
+    def __init__(self, universe, port, interface, interfaces_available, ports_available, vendor_id, product_id,
+                 bus, address, destructor, parent=None):
         super().__init__(parent)
 
         self.universe_spin: Optional[QSpinBox] = None
@@ -47,6 +48,11 @@ class InterfaceWidget(QWidget):
         self.interface_combo.addItems(interfaces_available)
 
         self.interface_combo.setCurrentText(interface)
+
+        self.vendor_id_spin.setValue(vendor_id)
+        self.product_id_spin.setValue(product_id)
+        self.bus_spin.setValue(bus)
+        self.address_spin.setValue(address)
 
         if interface in USB_INTERFACE_NAMES:
             # Interface needs USB Params

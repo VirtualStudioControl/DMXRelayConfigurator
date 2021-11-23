@@ -114,6 +114,9 @@ class DMXDevice:
         for child in self.children:
             child.__setValue(channel, value)
 
+        if self.universe < 0:
+            return
+
         if self.baseChannel < 0:
             return
 
@@ -138,6 +141,10 @@ class DMXDevice:
         val = -1
         if self.hasChildren():
             val = self.children[0].__getValue(channel)
+
+        if self.universe < 0:
+            return val
+
         if type(channel) == str:
             channel = self.getChannelIDByType(channel)
 
@@ -147,10 +154,22 @@ class DMXDevice:
         return frame_manager.getFrameProvider(self.universe).getChannel(channel + self.baseChannel)
 
     def __enforceConstantChannels(self):
+        for child in self.children:
+            child.__enforceConstantChannels()
+
+        if self.universe < 0:
+            return
+
         for channel in self.constantChannels:
             self.__setValue(channel, self.constantChannels[channel])
 
     def __updateFrame(self):
+        for child in self.children:
+            child.__updateFrame()
+
+        if self.universe < 0:
+            return
+
         self.__enforceConstantChannels()
         frame_manager.getFrameProvider(self.universe).updateFrame()
 
@@ -231,6 +250,11 @@ class DMXDevice:
         return self.hasChannelType(CHANNEL_TYPE_XYSPEED)
 
     def setColorRGB(self, red, green, blue):
+        if self.universe < 0:
+            for child in self.children:
+                child.setColorRGB(red, green, blue)
+            return
+
         if self.hasChannelType(CHANNEL_TYPE_WHITE):
             red, green, blue, white = rgb_to_rgbw(red, green, blue)
             self.setChannel(CHANNEL_TYPE_WHITE, white)
@@ -242,6 +266,10 @@ class DMXDevice:
         self.__updateFrame()
 
     def getColor(self):
+        if self.universe < 0:
+            if self.hasChildren():
+                return self.children[0].getColor()
+
         white = 0
 
         if self.hasChannelType(CHANNEL_TYPE_WHITE):
@@ -254,14 +282,26 @@ class DMXDevice:
         return (red, green, blue)
 
     def setPanTiltSpeed(self, value):
+        if self.universe < 0:
+            for child in self.children:
+                child.setPanTiltSpeed(value)
+            return
+
         if self.hasChannelType(CHANNEL_TYPE_XYSPEED):
             self.setChannel(CHANNEL_TYPE_XYSPEED, value)
             self.__updateFrame()
 
     def getPanTiltSpeed(self):
+        if self.universe < 0:
+            if self.hasChildren():
+                return self.children[0].getPanTiltSpeed()
         return self.getChannel(CHANNEL_TYPE_XYSPEED)
 
     def setPan(self, value):
+        if self.universe < 0:
+            for child in self.children:
+                child.setPan(value)
+            return
         if self.hasChannelType(CHANNEL_TYPE_PAN):
             if self.hasChannelType(CHANNEL_TYPE_PAN_FINE):
                 self.setInt16(CHANNEL_TYPE_PAN, CHANNEL_TYPE_PAN_FINE, value)
@@ -271,11 +311,19 @@ class DMXDevice:
             self.__updateFrame()
 
     def getPan(self):
+        if self.universe < 0:
+            if self.hasChildren():
+                return self.children[0].getPan()
+
         if self.hasChannelType(CHANNEL_TYPE_PAN_FINE):
             return self.getInt16(CHANNEL_TYPE_PAN, CHANNEL_TYPE_PAN_FINE)
         return self.getChannel(CHANNEL_TYPE_PAN) << 8
 
     def setTilt(self, value):
+        if self.universe < 0:
+            for child in self.children:
+                child.setTilt(value)
+            return
         if self.hasChannelType(CHANNEL_TYPE_TILT):
             if self.hasChannelType(CHANNEL_TYPE_TILT_FINE):
                 self.setInt16(CHANNEL_TYPE_TILT, CHANNEL_TYPE_TILT_FINE, value)
@@ -285,6 +333,10 @@ class DMXDevice:
             self.__updateFrame()
 
     def getTilt(self):
+        if self.universe < 0:
+            if self.hasChildren():
+                return self.children[0].getTilt()
+
         if self.hasChannelType(CHANNEL_TYPE_TILT_FINE):
             return self.getInt16(CHANNEL_TYPE_TILT, CHANNEL_TYPE_TILT_FINE)
         return self.getChannel(CHANNEL_TYPE_TILT) << 8
@@ -294,7 +346,7 @@ class DMXDevice:
 
         cds = []
         for child in self.children:
-            cds.append(child.toDict)
+            cds.append(child.toDict())
 
         return {
             "name": self.name,

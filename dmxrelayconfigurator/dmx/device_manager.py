@@ -8,6 +8,9 @@ DMX_DEVICES: List[DMXDevice] = []
 def addDMXDevice(device: DMXDevice):
     DMX_DEVICES.append(device)
 
+    for child in device.children:
+        addDMXDevice(child)
+
 
 def clearDMXDevices():
     DMX_DEVICES.clear()

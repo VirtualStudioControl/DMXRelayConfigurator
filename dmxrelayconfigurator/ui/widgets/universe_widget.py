@@ -14,6 +14,7 @@ from dmxrelayconfigurator.ui.widgets.channel_widget import ChannelWidget
 
 logger = logengine.getLogger()
 
+
 class UniverseWidget(QWidget, IFrameProvider):
 
     def __init__(self, universe: int, frameData = None, parent=None):
