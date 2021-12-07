@@ -44,6 +44,9 @@ def addMovingHead(name, baseaddress, universe):
     device_manager.addDMXDevice(dev)
     return dev
 
+def addRGBAWMovingHead(name, baseaddress, universe):
+    pass
+
 def addSpot(name, baseaddress, universe):
     pass
 
@@ -110,6 +113,9 @@ if __name__ == "__main__":
     addSpot("SP 1", 104, UNIVERSE_1)
     addSpot("SP 2", 112, UNIVERSE_1)
 
+    addRGBAWMovingHead("rgbaw-MH", 120, UNIVERSE_1)
+    addRGBAWMovingHead("rgbaw-MH", 140, UNIVERSE_1)
+
     mhs.append(addMovingHead("MH 5", 0, UNIVERSE_2))
     mhs.append(addMovingHead("MH 6", 14, UNIVERSE_2))
     mhs.append(addMovingHead("MH 7", 28, UNIVERSE_2))
@@ -126,6 +132,10 @@ if __name__ == "__main__":
     addDipSwitch("DS 1", 124, UNIVERSE_2)
 
     addMini("MINI 1", 132, UNIVERSE_2)
+
+    addRGBAWMovingHead("rgbaw-MH", 140, UNIVERSE_2)
+
+
 
     mhg = addGroupMHs("Moving Heads", mhs)
     bigg = addGroupRGB("Bigs", bigs)
