@@ -28,6 +28,9 @@ class DMXDeviceWidget(QWidget):
         self.label_basechannel.setText("{}".format(device.baseChannel+1))
 
         self.colorWidget = None
+        self.uvWidget = None
+        self.dimmerWidget = None
+
         self.panWidget = None
         self.tiltWidget = None
         self.speedWidget = None
@@ -35,6 +38,13 @@ class DMXDeviceWidget(QWidget):
         if device.hasColor():
             self.colorWidget = self.setupColorWidget()
 
+        if device.hasUV():
+            self.uvWidget = self.setupRotationWidget("UV", 0xff, self.device.getUV(), False,
+                                                        valueChanged=self.setDeviceUV)
+
+        if device.hasDimmer():
+            self.dimmerWidget = self.setupRotationWidget("Dimmer", 0xff, self.device.getDimmer(),
+                                                        valueChanged=self.setDeviceDimmer)
         if device.hasPan():
             self.panWidget = self.setupRotationWidget("Pan", 0xffff, self.device.getPan(), valueChanged=self.setDevicePan)
 
@@ -64,6 +74,13 @@ class DMXDeviceWidget(QWidget):
         if self.colorWidget is not None:
             self.colorWidget.setColor(QColor(*self.device.getColor()))
 
+        if self.uvWidget is not None:
+            self.uvWidget.setValueSilent(self.device.getUV())
+
+        if self.dimmerWidget is not None:
+            if abs(self.dimmerWidget.value - self.device.getDimmer()) > 1:
+                self.dimmerWidget.setValueSilent(self.device.getDimmer())
+
         if self.panWidget is not None:
             self.panWidget.setValueSilent(self.device.getPan())
 
@@ -85,6 +102,13 @@ class DMXDeviceWidget(QWidget):
         if self.speedWidget is not None:
             self.device.setPanTiltSpeed(self.speedWidget.value)
 
+    def setDeviceDimmer(self):
+        if self.dimmerWidget is not None:
+            self.device.setDimmer(self.dimmerWidget.value)
+
+    def setDeviceUV(self):
+        if self.uvWidget is not None:
+            self.device.setUV(self.uvWidget.value)
+
     def setDeviceColor(self, color: QColor = Qt.red):
-        logger.info("{}".format(self.device))
         self.device.setColorRGB(color.red(), color.green(), color.blue())

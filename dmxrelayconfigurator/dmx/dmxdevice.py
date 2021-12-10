@@ -3,7 +3,7 @@ from typing import List, Dict, Union, Callable
 
 from dmxrelayconfigurator.dmx import frame_manager
 from dmxrelayconfigurator.logging import logengine
-from dmxrelayconfigurator.tools.colorTools import rgb_to_rgbw
+from dmxrelayconfigurator.tools.mapping_tools import rgb_to_rgbw, byte_to_dimmer_range, dimmer_range_to_byte
 
 CHANNEL_TYPE_UNKNOWN = "UNKNOWN"
 
@@ -32,8 +32,10 @@ logger = logengine.getLogger()
 class DMXDevice:
 
     def __init__(self, universe: int, baseChannel: int, channelCount: int, name: str = "", devtype: str = "", channelTypes=None,
-                 constantChannels: Dict[Union[str, int], int]=None):
+                 constantChannels: Dict[Union[str, int], int]=None,  dimmerRange=None):
         super(DMXDevice, self).__init__()
+        if dimmerRange is None:
+            dimmerRange = [0, 1, 254, 255]
         if constantChannels is None:
             constantChannels = {}
         if channelTypes is None:
@@ -54,6 +56,8 @@ class DMXDevice:
                 self.channelTypes[i] = channelTypes[i]
 
         self.constantChannels = constantChannels
+
+        self.dimmerRange = dimmerRange
 
         self.parent = None
         self.children = []
@@ -240,6 +244,12 @@ class DMXDevice:
     def hasColor(self):
         return self.hasChannelType(CHANNEL_TYPE_RED)
 
+    def hasUV(self):
+        return self.hasChannelType(CHANNEL_TYPE_UV)
+
+    def hasDimmer(self):
+        return self.hasChannelType(CHANNEL_TYPE_DIMMER)
+
     def hasPan(self):
         return self.hasChannelType(CHANNEL_TYPE_PAN)
 
@@ -280,6 +290,38 @@ class DMXDevice:
         blue = min(self.getChannel(CHANNEL_TYPE_BLUE) + white, 0xff)
 
         return (red, green, blue)
+
+    def setUV(self, value):
+        if self.universe < 0:
+            for child in self.children:
+                child.setUV(value)
+            return
+
+        if self.hasChannelType(CHANNEL_TYPE_UV):
+            self.setChannel(CHANNEL_TYPE_UV, value)
+            self.__updateFrame()
+
+    def getUV(self):
+        if self.universe < 0:
+            if self.hasChildren():
+                return self.children[0].getUV()
+        return self.getChannel(CHANNEL_TYPE_UV)
+
+    def setDimmer(self, value):
+        if self.universe < 0:
+            for child in self.children:
+                child.setDimmer(value)
+            return
+
+        if self.hasChannelType(CHANNEL_TYPE_DIMMER):
+            self.setChannel(CHANNEL_TYPE_DIMMER, byte_to_dimmer_range(value, self.dimmerRange))
+            self.__updateFrame()
+
+    def getDimmer(self):
+        if self.universe < 0:
+            if self.hasChildren():
+                return self.children[0].getDimmer()
+        return dimmer_range_to_byte(self.getChannel(CHANNEL_TYPE_DIMMER), self.dimmerRange)
 
     def setPanTiltSpeed(self, value):
         if self.universe < 0:
@@ -356,13 +398,14 @@ class DMXDevice:
             "channelCount": self.channelCount,
             "channelTypes": self.channelTypes,
             "constantChannels": self.constantChannels,
+            "dimmerRange": self.dimmerRange,
             "childs": cds
         }
 
 def fromDict(values, parent=None):
     dev = DMXDevice(universe=values["universe"], baseChannel=values["baseChannel"], channelCount=values["channelCount"],
                     name=values["name"], devtype=values["deviceType"], channelTypes=values["channelTypes"],
-                    constantChannels=values["constantChannels"])
+                    constantChannels=values["constantChannels"], dimmerRange=values["dimmerRange"])
 
     if parent is not None:
         dev.setParent(parent)

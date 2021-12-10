@@ -24,7 +24,9 @@ def addUKing(name, baseaddress, universe):
                                                         CHANNEL_TYPE_BLUE,
                                                         CHANNEL_TYPE_STROBO, CHANNEL_TYPE_COLOR_MODE,
                                                         CHANNEL_TYPE_COLOR_JUMP_SPEED],
-                                          constantChannels={CHANNEL_TYPE_DIMMER: 0xff, CHANNEL_TYPE_COLOR_MODE: 0x00})
+                                          constantChannels={CHANNEL_TYPE_COLOR_MODE: 0x00},
+                                          dimmerRange = [0, 1, 254, 255]
+    )
     device_manager.addDMXDevice(dev)
     return dev
 
@@ -37,15 +39,29 @@ def addMovingHead(name, baseaddress, universe):
                                                         CHANNEL_TYPE_BLUE, CHANNEL_TYPE_WHITE, CHANNEL_TYPE_COLOR_MODE,
                                                         CHANNEL_TYPE_COLOR_JUMP_SPEED, CHANNEL_TYPE_CUSTOM,
                                                         CHANNEL_TYPE_RESET],
-                                          constantChannels={CHANNEL_TYPE_DIMMER: 0xff,
-                                                            CHANNEL_TYPE_COLOR_MODE: 0x00,
+                                          constantChannels={CHANNEL_TYPE_COLOR_MODE: 0x00,
                                                             CHANNEL_TYPE_CUSTOM: 0x00,
-                                                            CHANNEL_TYPE_RESET: 0x00})
+                                                            CHANNEL_TYPE_RESET: 0x00},
+                                          dimmerRange = [0, 8, 134, 255])
     device_manager.addDMXDevice(dev)
     return dev
 
 def addRGBAWMovingHead(name, baseaddress, universe):
-    pass
+    dev = DMXDevice(universe=universe, baseChannel=baseaddress, channelCount=16,
+                    name=name, devtype="ETEC RGBWAUv Moving Head",
+                    channelTypes=[CHANNEL_TYPE_PAN, CHANNEL_TYPE_PAN_FINE, CHANNEL_TYPE_TILT,
+                                  CHANNEL_TYPE_TILT_FINE, CHANNEL_TYPE_XYSPEED,
+                                  CHANNEL_TYPE_DIMMER, CHANNEL_TYPE_RED, CHANNEL_TYPE_GREEN,
+                                  CHANNEL_TYPE_BLUE, CHANNEL_TYPE_WHITE, CHANNEL_TYPE_AMBER, CHANNEL_TYPE_UV,
+                                  CHANNEL_TYPE_COLOR_MODE,
+                                  CHANNEL_TYPE_COLOR_JUMP_SPEED, CHANNEL_TYPE_CUSTOM,
+                                  CHANNEL_TYPE_RESET],
+                    constantChannels={CHANNEL_TYPE_COLOR_MODE: 0x00,
+                                      CHANNEL_TYPE_CUSTOM: 0x00,
+                                      CHANNEL_TYPE_RESET: 0x00},
+                    dimmerRange=[0, 8, 134, 255])
+    device_manager.addDMXDevice(dev)
+    return dev
 
 def addSpot(name, baseaddress, universe):
     pass
@@ -113,8 +129,8 @@ if __name__ == "__main__":
     addSpot("SP 1", 104, UNIVERSE_1)
     addSpot("SP 2", 112, UNIVERSE_1)
 
-    addRGBAWMovingHead("rgbaw-MH", 120, UNIVERSE_1)
-    addRGBAWMovingHead("rgbaw-MH", 140, UNIVERSE_1)
+    addRGBAWMovingHead("rgbaw-MH", 119, UNIVERSE_1)
+    addRGBAWMovingHead("rgbaw-MH", 139, UNIVERSE_1)
 
     mhs.append(addMovingHead("MH 5", 0, UNIVERSE_2))
     mhs.append(addMovingHead("MH 6", 14, UNIVERSE_2))
@@ -133,7 +149,7 @@ if __name__ == "__main__":
 
     addMini("MINI 1", 132, UNIVERSE_2)
 
-    addRGBAWMovingHead("rgbaw-MH", 140, UNIVERSE_2)
+    addRGBAWMovingHead("rgbaw-MH", 139, UNIVERSE_2)
 
 
 
