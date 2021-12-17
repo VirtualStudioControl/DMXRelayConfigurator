@@ -17,6 +17,7 @@ def addBIG(name, baseaddress, universe):
     device_manager.addDMXDevice(dev)
     return dev
 
+
 def addUKing(name, baseaddress, universe):
     dev = DMXDevice(universe=universe, baseChannel=baseaddress, channelCount=7,
                                           name=name, devtype="UKing ZQ-B53B",
@@ -29,6 +30,7 @@ def addUKing(name, baseaddress, universe):
     )
     device_manager.addDMXDevice(dev)
     return dev
+
 
 def addMovingHead(name, baseaddress, universe):
     dev = DMXDevice(universe=universe, baseChannel=baseaddress, channelCount=14,
@@ -45,6 +47,7 @@ def addMovingHead(name, baseaddress, universe):
                                           dimmerRange = [0, 8, 134, 255])
     device_manager.addDMXDevice(dev)
     return dev
+
 
 def addRGBAWMovingHead(name, baseaddress, universe):
     dev = DMXDevice(universe=universe, baseChannel=baseaddress, channelCount=16,
@@ -63,14 +66,36 @@ def addRGBAWMovingHead(name, baseaddress, universe):
     device_manager.addDMXDevice(dev)
     return dev
 
-def addSpot(name, baseaddress, universe):
-    pass
 
-def addDipSwitch(name, baseaddress, universe):
-    pass
+def addSpot(name, baseaddress, universe):
+    dev = DMXDevice(universe=universe, baseChannel=baseaddress, channelCount=14,
+                    name=name, devtype="Spot",
+                    channelTypes=[CHANNEL_TYPE_DIMMER,
+                                  CHANNEL_TYPE_RED,
+                                  CHANNEL_TYPE_GREEN,
+                                  CHANNEL_TYPE_BLUE,
+                                  CHANNEL_TYPE_WHITE,
+                                  CHANNEL_TYPE_COLOR_MODE],
+                    constantChannels={CHANNEL_TYPE_COLOR_MODE: 0},
+                    dimmerRange=[0, 8, 134, 255])
+    device_manager.addDMXDevice(dev)
+    return dev
+
 
 def addMini(name, baseaddress, universe):
-    pass
+    dev = DMXDevice(universe=universe, baseChannel=baseaddress, channelCount=14,
+                    name=name, devtype="Mini",
+                    channelTypes=[CHANNEL_TYPE_DIMMER,
+                                  CHANNEL_TYPE_RED,
+                                  CHANNEL_TYPE_GREEN,
+                                  CHANNEL_TYPE_BLUE,
+                                  CHANNEL_TYPE_WHITE,
+                                  CHANNEL_TYPE_COLOR_MODE,
+                                  CHANNEL_TYPE_COLOR_JUMP_SPEED],
+                    constantChannels={CHANNEL_TYPE_COLOR_MODE: 0},
+                    dimmerRange=[0, 1, 254, 255])
+    device_manager.addDMXDevice(dev)
+    return dev
 
 #endregion
 
@@ -80,7 +105,7 @@ def addGroupRGB(name, devicelist):
     dev = DMXDevice(universe=-1, baseChannel=0, channelCount=3,
               name=name, devtype="RGB Group",
               channelTypes=[CHANNEL_TYPE_RED, CHANNEL_TYPE_GREEN,
-                            CHANNEL_TYPE_BLUE],
+                            CHANNEL_TYPE_BLUE, CHANNEL_TYPE_DIMMER],
               constantChannels={})
 
     for d in devicelist:
@@ -94,6 +119,7 @@ def addGroupMHs(name, devicelist):
                     name=name, devtype="MH Group",
                     channelTypes=[CHANNEL_TYPE_RED, CHANNEL_TYPE_GREEN,
                                   CHANNEL_TYPE_BLUE, CHANNEL_TYPE_WHITE,
+                                  CHANNEL_TYPE_DIMMER,
                                   CHANNEL_TYPE_PAN, CHANNEL_TYPE_PAN_FINE,
                                   CHANNEL_TYPE_TILT, CHANNEL_TYPE_TILT_FINE,
                                   CHANNEL_TYPE_XYSPEED],
@@ -129,8 +155,8 @@ if __name__ == "__main__":
     addSpot("SP 1", 104, UNIVERSE_1)
     addSpot("SP 2", 112, UNIVERSE_1)
 
-    addRGBAWMovingHead("rgbaw-MH", 119, UNIVERSE_1)
     addRGBAWMovingHead("rgbaw-MH", 139, UNIVERSE_1)
+    addRGBAWMovingHead("rgbaw-MH", 159, UNIVERSE_1)
 
     mhs.append(addMovingHead("MH 5", 0, UNIVERSE_2))
     mhs.append(addMovingHead("MH 6", 14, UNIVERSE_2))
@@ -145,13 +171,11 @@ if __name__ == "__main__":
     ukings.append(addUKing("UK 6", 108, UNIVERSE_2))
     ukings.append(addUKing("UK 7", 116, UNIVERSE_2))
 
-    addDipSwitch("DS 1", 124, UNIVERSE_2)
-
     addMini("MINI 1", 132, UNIVERSE_2)
 
     addRGBAWMovingHead("rgbaw-MH", 139, UNIVERSE_2)
-
-
+    addRGBAWMovingHead("rgbaw-MH", 159, UNIVERSE_2)
+    addRGBAWMovingHead("rgbaw-MH", 179, UNIVERSE_2)
 
     mhg = addGroupMHs("Moving Heads", mhs)
     bigg = addGroupRGB("Bigs", bigs)

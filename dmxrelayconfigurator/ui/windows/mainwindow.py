@@ -187,7 +187,6 @@ class MainWindow(QMainWindow):
     def setupDMXScene(self):
         for device in device_manager.getDMXDevices():
             self.addDMXWidget(device)
-            logger.info(self.verticalLayout_3.count())
 
         #self.device_list.layout().addWidget(Spacer())
 

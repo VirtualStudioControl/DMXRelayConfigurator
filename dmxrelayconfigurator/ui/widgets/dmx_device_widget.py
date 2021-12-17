@@ -92,6 +92,7 @@ class DMXDeviceWidget(QWidget):
 
     def setDevicePan(self):
         if self.panWidget is not None:
+
             self.device.setPan(self.panWidget.value)
 
     def setDeviceTilt(self):

@@ -3,7 +3,8 @@ from typing import List, Dict, Union, Callable
 
 from dmxrelayconfigurator.dmx import frame_manager
 from dmxrelayconfigurator.logging import logengine
-from dmxrelayconfigurator.tools.mapping_tools import rgb_to_rgbw, byte_to_dimmer_range, dimmer_range_to_byte
+from dmxrelayconfigurator.tools.mapping_tools import rgb_to_rgbw, byte_to_dimmer_range, dimmer_range_to_byte, \
+    rgbw_to_rgb
 
 CHANNEL_TYPE_UNKNOWN = "UNKNOWN"
 
@@ -285,11 +286,10 @@ class DMXDevice:
         if self.hasChannelType(CHANNEL_TYPE_WHITE):
             white = self.getChannel(CHANNEL_TYPE_WHITE)
 
-        red = min(self.getChannel(CHANNEL_TYPE_RED) + white, 0xff)
-        green = min(self.getChannel(CHANNEL_TYPE_GREEN) + white, 0xff)
-        blue = min(self.getChannel(CHANNEL_TYPE_BLUE) + white, 0xff)
-
-        return (red, green, blue)
+        return rgbw_to_rgb(self.getChannel(CHANNEL_TYPE_RED),
+                           self.getChannel(CHANNEL_TYPE_GREEN),
+                           self.getChannel(CHANNEL_TYPE_BLUE),
+                           white)
 
     def setUV(self, value):
         if self.universe < 0:
