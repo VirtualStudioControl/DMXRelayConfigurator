@@ -263,11 +263,16 @@ class MainWindow(QMainWindow):
                 port = interface[CONFIG_KEY_DMX_INTERFACE_PORT]
                 device = interface[CONFIG_KEY_DMX_INTERFACE_TYPE]
 
-                vendor_id = interface[CONFIG_KEY_DMX_INTERFACE_USB_VENDOR_ID]
-                product_id = interface[CONFIG_KEY_DMX_INTERFACE_USB_PRODUCT_ID]
-                bus = interface[CONFIG_KEY_DMX_INTERFACE_USB_BUS]
-                address = interface[CONFIG_KEY_DMX_INTERFACE_USB_ADDRESS]
-
+                if CONFIG_KEY_DMX_INTERFACE_USB_VENDOR_ID in interface:
+                    vendor_id = interface[CONFIG_KEY_DMX_INTERFACE_USB_VENDOR_ID]
+                    product_id = interface[CONFIG_KEY_DMX_INTERFACE_USB_PRODUCT_ID]
+                    bus = interface[CONFIG_KEY_DMX_INTERFACE_USB_BUS]
+                    address = interface[CONFIG_KEY_DMX_INTERFACE_USB_ADDRESS]
+                else:
+                    vendor_id = 0
+                    product_id = 0
+                    bus = 0
+                    address = 0
                 frame = [0]*512
                 if universe in dmx_buffer:
                     frame = dmx_buffer[universe]
@@ -287,7 +292,7 @@ class MainWindow(QMainWindow):
         self.onDMXSceneGotten.emit()
     #endregion
 
-    def addInterfaceWidget(self, universe, port, device, vendor_id, product_id, bus, address):
+    def addInterfaceWidget(self, universe, port, device, vendor_id = 0, product_id = 0, bus = 0, address = 0):
         interWidget = InterfaceWidget(universe, port, device, self.interfaceNames, self.availablePorts, vendor_id,
                                       product_id, bus, address, self.removeInterfacewidgetFromList)
         self.interface_widgets.append(interWidget)
