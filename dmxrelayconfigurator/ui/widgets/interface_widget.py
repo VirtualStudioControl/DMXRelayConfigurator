@@ -1,7 +1,7 @@
 from typing import Optional
 
 from PyQt5 import uic
-from PyQt5.QtWidgets import QWidget, QSpinBox, QComboBox, QToolButton, QStackedWidget
+from PyQt5.QtWidgets import QWidget, QSpinBox, QComboBox, QToolButton, QStackedWidget, QLineEdit
 
 CONFIG_KEY_DMX_INTERFACE_PORT = "port"
 
@@ -13,9 +13,12 @@ CONFIG_KEY_DMX_INTERFACE_USB_ADDRESS = "usb_address"
 CONFIG_KEY_DMX_INTERFACE_TYPE = "type"
 CONFIG_KEY_DMX_INTERFACE_UNIVERSE = "universe"
 
+CONFIG_KEY_DMX_INTERFACE_NET_ADDRESS = "ip_address"
+CONFIG_KEY_DMX_INTERFACE_NET_PORT = "ip_port"
+
 
 USB_INTERFACE_NAMES = ["UDMX"]
-
+NET_INTERFACE_NAMES = ["UDP", "TCP"]
 
 class InterfaceWidget(QWidget):
 
@@ -34,6 +37,10 @@ class InterfaceWidget(QWidget):
         self.product_id_spin: Optional[QSpinBox] = None
         self.bus_spin: Optional[QSpinBox] = None
         self.address_spin: Optional[QSpinBox] = None
+
+        self.ip_address: Optional[QLineEdit] = None
+        self.ip_port: Optional[QSpinBox] = None
+
 
         self.close_btn: Optional[QToolButton] = None
 
@@ -63,6 +70,8 @@ class InterfaceWidget(QWidget):
 
         self.destructor = destructor
 
+        self.updateStack()
+
         self.setupCallbacks()
 
     def setupCallbacks(self):
@@ -73,6 +82,8 @@ class InterfaceWidget(QWidget):
         if self.interface_combo.currentText() in USB_INTERFACE_NAMES:
             # Interface needs USB Params
             self.optionStack.setCurrentIndex(1)
+        elif self.interface_combo.currentText() in NET_INTERFACE_NAMES:
+            self.optionStack.setCurrentIndex(2)
         else:
             # Interface needs Serial Params
             self.optionStack.setCurrentIndex(0)
@@ -90,5 +101,8 @@ class InterfaceWidget(QWidget):
             CONFIG_KEY_DMX_INTERFACE_USB_VENDOR_ID: self.vendor_id_spin.value(),
             CONFIG_KEY_DMX_INTERFACE_USB_PRODUCT_ID: self.product_id_spin.value(),
             CONFIG_KEY_DMX_INTERFACE_USB_BUS: self.bus_spin.value(),
-            CONFIG_KEY_DMX_INTERFACE_USB_ADDRESS: self.address_spin.value()
+            CONFIG_KEY_DMX_INTERFACE_USB_ADDRESS: self.address_spin.value(),
+
+            CONFIG_KEY_DMX_INTERFACE_NET_ADDRESS: self.ip_address.text(),
+            CONFIG_KEY_DMX_INTERFACE_NET_PORT: self.ip_port.value()
         }
