@@ -4,7 +4,7 @@ from typing import List, Dict, Union, Callable
 from dmxrelayconfigurator.dmx import frame_manager
 from dmxrelayconfigurator.logging import logengine
 from dmxrelayconfigurator.tools.mapping_tools import rgb_to_rgbw, byte_to_dimmer_range, dimmer_range_to_byte, \
-    rgbw_to_rgb
+    rgbw_to_rgb, rgbwa_to_rgb
 
 CHANNEL_TYPE_UNKNOWN = "UNKNOWN"
 
@@ -26,6 +26,7 @@ CHANNEL_TYPE_COLOR_MODE = "COLOR_MODE"
 CHANNEL_TYPE_COLOR_JUMP_SPEED = "COLOR_SPEED"
 CHANNEL_TYPE_COLOR_TEMPERATURE = "COLOR_TEMPERATURE"
 CHANNEL_TYPE_STROBO = "STROBO"
+CHANNEL_TYPE_PROGRAM = "PROGRAM"
 CHANNEL_TYPE_CUSTOM = "CUSTOM"
 CHANNEL_TYPE_RESET = "RESET"
 
@@ -271,6 +272,19 @@ class DMXDevice:
             red, green, blue, white = rgb_to_rgbw(red, green, blue)
             self.setChannel(CHANNEL_TYPE_WHITE, white)
 
+        if self.hasChannelType(CHANNEL_TYPE_AMBER):
+            amber = 0
+            if red > 1 and green > 0:
+                if 2*green < red:
+                    amber = 2*green
+                    red -= 2*green
+                    green = 0
+                else:
+                    amber = red
+                    green -= red // 2
+                    red = red % 2
+            self.setChannel(CHANNEL_TYPE_AMBER, amber)
+
         self.setChannel(CHANNEL_TYPE_RED, red)
         self.setChannel(CHANNEL_TYPE_GREEN, green)
         self.setChannel(CHANNEL_TYPE_BLUE, blue)
@@ -283,14 +297,18 @@ class DMXDevice:
                 return self.children[0].getColor()
 
         white = 0
+        amber = 0
 
         if self.hasChannelType(CHANNEL_TYPE_WHITE):
             white = self.getChannel(CHANNEL_TYPE_WHITE)
 
-        return rgbw_to_rgb(self.getChannel(CHANNEL_TYPE_RED),
+        if self.hasChannelType(CHANNEL_TYPE_AMBER):
+            amber = self.getChannel(CHANNEL_TYPE_AMBER)
+
+        return rgbwa_to_rgb(self.getChannel(CHANNEL_TYPE_RED),
                            self.getChannel(CHANNEL_TYPE_GREEN),
                            self.getChannel(CHANNEL_TYPE_BLUE),
-                           white)
+                           white, amber)
 
     def setUV(self, value):
         if self.universe < 0:

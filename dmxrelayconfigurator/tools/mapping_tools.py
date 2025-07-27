@@ -23,6 +23,14 @@ def rgbw_to_rgb(red, green, blue, white):
 
     return red, green, blue
 
+def rgbwa_to_rgb(red, green, blue, white, amber=0):
+
+    red = min(255, red + white + amber)
+    green = min(255, green + white + (amber//2))
+    blue = min(255, blue + white)
+
+    return red, green, blue
+
 
 def byte_to_dimmer_range(value, dimmerRange):
     if value <= 0:

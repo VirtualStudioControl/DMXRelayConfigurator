@@ -285,6 +285,15 @@ class MainWindow(QMainWindow):
                 self.universetabwidget.addTab(uniWidget,
                                               "Universe {}".format(universe))
 
+                #TODO: Implement proper generic way of handling multiple interfaces per universe
+                if interface[CONFIG_KEY_DMX_INTERFACE_TYPE] == "WLED":
+                    uniWidget2 = UniverseWidget(universe, frame)
+                    uniWidget2.client = self.client
+
+                    self.universe_widgets[universe+1] = uniWidget2
+                    self.universetabwidget.addTab(uniWidget2,
+                                                  "Universe {}".format(universe + 1))
+
                 self.addInterfaceWidget(universe, port, device, vendor_id, product_id, bus, address)
         except Exception as ex:
             logger.exception(ex)

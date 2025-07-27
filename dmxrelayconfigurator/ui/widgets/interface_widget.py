@@ -18,7 +18,7 @@ CONFIG_KEY_DMX_INTERFACE_NET_PORT = "ip_port"
 
 
 USB_INTERFACE_NAMES = ["UDMX"]
-NET_INTERFACE_NAMES = ["UDP", "TCP"]
+NET_INTERFACE_NAMES = ["UDP", "TCP", "WLED"]
 
 class InterfaceWidget(QWidget):
 
@@ -78,11 +78,14 @@ class InterfaceWidget(QWidget):
         self.close_btn.clicked.connect(self.removeWidget)
         self.interface_combo.currentIndexChanged.connect(self.updateStack)
 
-    def updateStack(self):
-        if self.interface_combo.currentText() in USB_INTERFACE_NAMES:
+    def updateStack(self, text: str = None):
+        if text is None:
+            text = self.interface_combo.currentText()
+        if text in USB_INTERFACE_NAMES:
             # Interface needs USB Params
             self.optionStack.setCurrentIndex(1)
         elif self.interface_combo.currentText() in NET_INTERFACE_NAMES:
+            # Interface needs Net Params
             self.optionStack.setCurrentIndex(2)
         else:
             # Interface needs Serial Params
